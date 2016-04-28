@@ -46,6 +46,7 @@
 #include <commander/px4_custom_mode.h>
 #include <lib/geo/geo.h>
 #include <uORB/uORB.h>
+#include <uORB/topics/eag_raw.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_gps_position.h>
@@ -342,6 +343,64 @@ protected:
 
 		_mavlink->send_message(MAVLINK_MSG_ID_HEARTBEAT, &msg);
 	}
+};
+
+class MavlinkStreamEagRaw : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamEagRaw::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "EAG_RAW";
+	}
+
+	uint8_t get_id()
+	{
+		return MAVLINK_MSG_ID_EAG_RAW;
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+			return new MavlinkStreamEagRaw(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_EAG_RAW_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_eag_sub;
+	uint64_t _eag_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamEagRaw(MavlinkStreamEagRaw &);
+	MavlinkStreamEagRaw& operator = (const MavlinkStreamEagRaw &);
+
+protected:
+	explicit MavlinkStreamEagRaw(Mavlink *mavlink) : MavlinkStream(mavlink),
+	_eag_sub(_mavlink->add_orb_subscription(ORB_ID(eag_raw))),
+	_eag_time(0)
+	{}
+
+	void send(hrt_abstime t)
+	{
+		struct eag_raw_s data;
+
+		if(_eag_sub->update(&_eag_time, &data)){
+			mavlink_eag_raw_t msg = {};
+
+			msg.raw_data = data.raw_data;
+			msg.time_stamp = data.time_stamp;
+
+			_mavlink->send_message(MAVLINK_MSG_ID_EAG_RAW, &msg);
+		}
+	}
+
 };
 
 class MavlinkStreamStatustext : public MavlinkStream
