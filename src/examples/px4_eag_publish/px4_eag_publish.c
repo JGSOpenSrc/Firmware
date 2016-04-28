@@ -84,7 +84,7 @@ int px4_eag_publish_main(int argc, char *argv[])
 			//  Got data, publish it
 			px4_read(eag_fd, &(eag.raw_data), sizeof(eag.raw_data));
 			eag.time_stamp = hrt_absolute_time();
-			orb_publish(ORB_ID(eag_raw), &eag_pub, &eag);
+			orb_publish(ORB_ID(eag_raw), eag_pub, &eag);
 		}
 
 		else if (pollret == 0){

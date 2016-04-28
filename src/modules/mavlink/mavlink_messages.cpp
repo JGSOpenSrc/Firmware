@@ -396,8 +396,9 @@ protected:
 
 			msg.raw_data = data.raw_data;
 			msg.time_stamp = data.time_stamp;
-
+			PX4_INFO("[Mavlink Stream EAG_RAW] sending payload");
 			_mavlink->send_message(MAVLINK_MSG_ID_EAG_RAW, &msg);
+			PX4_INFO("done");
 		}
 	}
 
@@ -3008,5 +3009,6 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamExtendedSysState::new_instance, &MavlinkStreamExtendedSysState::get_name_static),
 	new StreamListItem(&MavlinkStreamAltitude::new_instance, &MavlinkStreamAltitude::get_name_static),
 	new StreamListItem(&MavlinkStreamADSBVehicle::new_instance, &MavlinkStreamADSBVehicle::get_name_static),
+	new StreamListItem(&MavlinkStreamEagRaw::new_instance, &MavlinkStreamEagRaw::get_name_static),
 	nullptr
 };
