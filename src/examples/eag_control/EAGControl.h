@@ -8,7 +8,7 @@
 #include "uORB/topics/vehicle_force_setpoint.h"
 #include "uORB/topics/position_setpoint_triplet.h"
 #include "uORB/topics/vehicle_control_mode.h"
-// #include "uORB/topics/eag_scrubbed.h" not yet implemented
+#include "uORB/topics/eag_scrubbed.h"
 #include "uORB/topics/vehicle_attitude.h"
 #include "uORB/topics/manual_control_setpoint.h"
 
@@ -25,14 +25,23 @@ public:
 
   EAGControl() : SimpleTask("EAGContol", EAG_CONTROL_STACK_SIZE),
   eag_publisher(EAGPublisher()),
-  eag_scrubber(EAGScrubber()),
+  eag_scrubber(EAGScrubber())
   {
     _offboard_control_mode_pub = orb_advertise(ORB_ID(offboard_control_mode),
-                                                &_offboard_control);
+                                &_offboard_control);
+
     _force_sp_pub = orb_advertise(ORB_ID(vehicle_force_setpoint), &_force_sp);
 
     _force_sp_triplet_pub = orb_advertise(ORB_ID(position_setpoint_triplet),
-                                          &_position_sp);
+                            &_position_sp);
+
+    _control_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
+
+    _eag_scrubbed_sub = orb_subscribe(ORB_ID(eag_scrubbed));
+
+    _vehicle_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+
+    _manual_sp_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
   }
 
   ~EAGControl();
@@ -48,15 +57,11 @@ public:
   int job();
 
 private:
+  // Child threads
+  EAGPublisher eag_publisher;     // Collects and publishes raw eag data
+  EAGScrubber  eag_scrubber;      // Filters eag data and publishes output
 
-  EAGPublisher eag_publisher;
-
-  EAGScrubber  eag_scrubber;
-
-  // uORB structs
-  _offboard
-
-  // Topics published
+  // Topics published to
   orb_advert_t _offboard_control_mode_pub;
   struct offboard_control_mode_s _offboard_control;
 
@@ -66,12 +71,16 @@ private:
   orb_advert_t _force_sp_triplet_pub;
   struct position_setpoint_triplet_s _position_sp;
 
-  // Topics subbed
+  // Topics subscribed to
   int _control_mode_sub;
+  struct vehicle_control_mode_s _control_mode;
 
   int _eag_scrubbed_sub;
+  struct eag_scrubbed_s _eag_scrubbed;
 
   int _vehicle_att_sub;
+  struct vehicle_attitude_s _vehicle_att;
 
   int _manual_sp_sub;
+  struct manual_control_setpoint_s _manual_sp;
 };
