@@ -137,6 +137,10 @@ set(config_module_list
 	#modules/bottle_drop
 
 	#
+	# Smellcopter eag control
+	#
+	examples/eag_control
+	#
 	# Smellocopter apps
 	#
 	examples/px4_eag_publish
