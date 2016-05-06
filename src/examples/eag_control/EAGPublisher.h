@@ -2,7 +2,7 @@
 #include "SimpleTask.h"
 #include "uORB/topics/eag_raw.h"
 
-#define EAG_PUBLISHER_STACK_SIZE      1000
+#define EAG_PUBLISHER_STACK_SIZE      2000
 #define EAG_PUBLISHER_SCHED           SCHED_DEFAULT
 #define EAG_PUBLISHER_SCHED_PRIORITY  SCHED_PRIORITY_DEFAULT
 
@@ -27,8 +27,6 @@ public:
 private:
 
   char const * _eag_device;
-
-  int pollfd;
 
   // Topics published to
   orb_advert_t _eag_raw_pub;
