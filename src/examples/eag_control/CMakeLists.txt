@@ -33,7 +33,7 @@
 px4_add_module(
 	MODULE examples__eag_control
 	MAIN eag_control
-	STACK_MAIN 2000
+	STACK_MAIN 1000
 	SRCS
 		eag_control_main.cpp
 		SimpleTask.cpp
