@@ -1423,6 +1423,7 @@ int commander_thread_main(int argc, char *argv[])
 	/* Subscribe to land detector */
 	int land_detector_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 	struct vehicle_land_detected_s land_detector = {};
+	land_detector.landed = true;
 
 	/*
 	 * The home position is set based on GPS only, to prevent a dependency between
@@ -1699,7 +1700,7 @@ int commander_thread_main(int argc, char *argv[])
 				    !armed.armed) {
 
 					bool chAirspeed = false;
-					bool hotplug_timeout = hrt_elapsed_time(&commander_boot_timestamp) > HOTPLUG_SENS_TIMEOUT;
+					hotplug_timeout = hrt_elapsed_time(&commander_boot_timestamp) > HOTPLUG_SENS_TIMEOUT;
 
 					/* Perform airspeed check only if circuit breaker is not
 					 * engaged and it's not a rotary wing
@@ -1972,7 +1973,6 @@ int commander_thread_main(int argc, char *argv[])
 					}
 
 					if (_inair_last_time > 0 && ((hrt_absolute_time() - _inair_last_time) > (hrt_abstime)disarm_when_landed * 1000 * 1000)) {
-						mavlink_log_critical(&mavlink_log_pub, "AUTO DISARMING AFTER LANDING");
 						arm_disarm(false, &mavlink_log_pub, "auto disarm on land");
 						_inair_last_time = 0;
 						check_for_disarming = false;
@@ -2267,7 +2267,7 @@ int commander_thread_main(int argc, char *argv[])
 			main_state_before_rtl == commander_state_s::MAIN_STATE_STAB)) {
 
 			// transition to previous state if sticks are increased
-			const float min_stick_change = 0.2;
+			const float min_stick_change = 0.2f;
 			if ((_last_sp_man.timestamp != sp_man.timestamp) &&
 				((fabsf(sp_man.x) - fabsf(_last_sp_man.x) > min_stick_change) ||
 				 (fabsf(sp_man.y) - fabsf(_last_sp_man.y) > min_stick_change) ||
@@ -2874,7 +2874,7 @@ check_valid(hrt_abstime timestamp, hrt_abstime timeout, bool valid_in, bool *val
 }
 
 void
-control_status_leds(vehicle_status_s *status_local, const actuator_armed_s *actuator_armed, bool changed, battery_status_s *battery)
+control_status_leds(vehicle_status_s *status_local, const actuator_armed_s *actuator_armed, bool changed, battery_status_s *battery_status)
 {
 	/* driving rgbled */
 	if (changed) {
@@ -2907,9 +2907,9 @@ control_status_leds(vehicle_status_s *status_local, const actuator_armed_s *actu
 			/* set color */
 			if (status.failsafe) {
 				rgbled_set_color(RGBLED_COLOR_PURPLE);
-			} else if (battery->warning == battery_status_s::BATTERY_WARNING_LOW) {
+			} else if (battery_status->warning == battery_status_s::BATTERY_WARNING_LOW) {
 				rgbled_set_color(RGBLED_COLOR_AMBER);
-			} else if (battery->warning == battery_status_s::BATTERY_WARNING_CRITICAL) {
+			} else if (battery_status->warning == battery_status_s::BATTERY_WARNING_CRITICAL) {
 				rgbled_set_color(RGBLED_COLOR_RED);
 			} else {
 				if (status_flags.condition_home_position_valid && status_flags.condition_global_position_valid) {
@@ -2982,11 +2982,14 @@ set_main_state_rc(struct vehicle_status_s *status_local, struct manual_control_s
 		 (_last_sp_man.mode_slot == sp_man->mode_slot))) {
 
 		// update these fields for the geofence system
-		_last_sp_man.timestamp = sp_man->timestamp;
-		_last_sp_man.x = sp_man->x;
-		_last_sp_man.y = sp_man->y;
-		_last_sp_man.z = sp_man->z;
-		_last_sp_man.r = sp_man->r;
+
+		if (!rtl_on) {
+			_last_sp_man.timestamp = sp_man->timestamp;
+			_last_sp_man.x = sp_man->x;
+			_last_sp_man.y = sp_man->y;
+			_last_sp_man.z = sp_man->z;
+			_last_sp_man.r = sp_man->r;
+		}
 
 		/* no timestamp change or no switch change -> nothing changed */
 		return TRANSITION_NOT_CHANGED;

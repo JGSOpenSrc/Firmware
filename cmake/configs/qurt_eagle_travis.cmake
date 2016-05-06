@@ -17,6 +17,8 @@ endif()
 
 include_directories(${HEXAGON_SDK_ROOT}/lib/common/qurt/ADSPv5MP/include)
 
+set(config_generate_parameters_scope ALL)
+
 set(config_module_list
 	drivers/device
 	drivers/boards/sitl
@@ -67,6 +69,7 @@ set(config_module_list
 	lib/terrain_estimation
 	lib/runway_takeoff
 	lib/tailsitter_recovery
+	lib/DriverFramework/framework
 
 	#
 	# QuRT port
