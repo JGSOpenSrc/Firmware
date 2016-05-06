@@ -5,21 +5,9 @@
 #define SLEEP_INTERVAL_HZ 1
 #define READ_BUFFER_SIZE 10
 
-void EAGPublisher::start()
-{
-  SimpleTask::start();
-
-  this->schedule(EAG_PUBLISHER_SCHED_PRIORITY,
-                 EAG_PUBLISHER_SCHED);
-}
-
-void EAGPublisher::stop()
-{
-  SimpleTask::stop();
-}
-
 int EAGPublisher::job()
 {
+  this->thread_running = true;
   // attempt to open the _eag_device
   int eag_fd = px4_open(_eag_device, O_RDONLY);
 

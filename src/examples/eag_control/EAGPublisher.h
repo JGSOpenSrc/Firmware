@@ -10,17 +10,16 @@ class EAGPublisher : public SimpleTask
 {
 public:
 
-  EAGPublisher(): SimpleTask("EAGPublisher", EAG_PUBLISHER_STACK_SIZE)
+  EAGPublisher(): SimpleTask("EAGPublisher",
+                              EAG_PUBLISHER_SCHED_PRIORITY,
+                              EAG_PUBLISHER_STACK_SIZE,
+                              EAG_PUBLISHER_SCHED)
   {
     _eag_raw_pub = orb_advertise(ORB_ID(eag_raw), &_eag_raw);
 
     _eag_device = "/dev/ttyS6";
   }
   ~EAGPublisher();
-
-  void start();
-
-  void stop();
 
   int job();
 

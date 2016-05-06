@@ -1,4 +1,5 @@
 #include <px4_config.h>
+#include <px4_log.h>
 #include <nuttx/sched.h>
 
 #include <systemlib/systemlib.h>
@@ -20,23 +21,25 @@ class SimpleTask {
 
 public:
 
-  void start(){ if(!this->thread_running) this->thread_running = true; }
+  void start();
 
-  void stop() { if(this->thread_running) this->thread_should_exit = true; }
+  void stop() { if(thread_running) thread_should_exit = true; }
 
-  void join() { while(this->thread_running); }
+  void join() { while(thread_running); }
 
-  bool is_running() { return this->thread_running; }
+  bool is_running() { return thread_running; }
 
-  bool should_exit() { return this->thread_should_exit; }
+  bool should_exit() { return thread_should_exit; }
 
-  const char* get_name() { return this->task_name; }
+  const char* get_name() { return _task_name; }
 
-  int get_pid() { return this->pid; }
+  int get_pid() { return pid; }
 
   /* How to implement job():
-     job() should execute until the thread_should_exit flag is true,
-     then return an integer exitcode and set the thread_running flag to false.
+
+     job() should set the thread_running flag, execute until the
+     thread_should_exit flag is true, and when finished set the threa_running
+     flag to false.
   */
   virtual int job() = 0;
 
@@ -46,24 +49,30 @@ private:
 
   bool thread_should_exit;
 
+  const char* _task_name;
+
+  const int _priority;
+
+  const int _stack_size;
+
+  const int _scheduler;
+
 protected:
-  SimpleTask(const char* name = "", int size = 0) :
+  SimpleTask(const char* task_name, int priority, int stack_size, int scheduler) :
   pid(0),
   thread_should_exit(false),
-  thread_running(false),
-  task_name(name),
-  stack_size(size)
+  _task_name(task_name),
+  _priority(priority),
+  _stack_size(stack_size),
+  _scheduler(scheduler),
+  thread_running(false)
   {}
 
   ~SimpleTask();
 
   bool thread_running;
 
-  const char* task_name;
-
-  const int stack_size;
-
-  void schedule(int scheduler, int priority);
+  void thread_runtime_exception(const char *exception);
 };
 
 typedef struct TaskNode{

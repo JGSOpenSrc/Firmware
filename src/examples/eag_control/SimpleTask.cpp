@@ -19,32 +19,34 @@ SimpleTask::~SimpleTask()
   task_list->remove_task(this);
 }
 
-/*
-Registers this task in the nuttx scheduler. This method must be called by the
-Task object.
-
-@param priority the priority of the thread (see px4_tasks.h)
-@param scheduler the scheduler to use (see px4_tasks.h)
-*/
-void SimpleTask::schedule(int priority, int scheduler)
+// Registers the job in the scheduler
+void SimpleTask::start()
 {
+  if(this->is_running()) return;
   // A list of all scheduled tasks
   static TaskList tasks;
   task_list = &tasks;
 
   // Add the task if its not already in the list (no duplicate names allowed)
-  if(task_list->get_task(this->task_name) == NULL){
+  if(task_list->get_task(_task_name) == NULL){
     task_list->add_task(this);
   }
 
-  char* const* argv = (char* const*)&this->task_name;
+  char* const* argv = (char* const*)&_task_name;
   // Schedule the task
-  this->pid = px4_task_spawn_cmd(this->task_name,
-                                scheduler,
-                                priority,
-                                this->stack_size,
-                                run_job,
-                                argv);
+  pid = px4_task_spawn_cmd(_task_name,
+                            _scheduler,
+                            _priority,
+                            _stack_size,
+                            run_job,
+                            argv);
+}
+
+void SimpleTask::thread_runtime_exception(const char *exception)
+{
+  PX4_ERR("Runtime exception in %s: %s\n Thread terminated.",
+          _task_name, exception);
+  thread_should_exit = true;
 }
 /*
 Callback method used to enter a task's working thread.

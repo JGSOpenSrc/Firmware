@@ -13,7 +13,7 @@
 #include "uORB/topics/manual_control_setpoint.h"
 
 
-#define EAG_CONTROL_STACK_SIZE     1000
+#define EAG_CONTROL_STACK_SIZE     2000
 #define EAG_CONTROL_SCHED          SCHED_DEFAULT
 #define EAG_CONTROL_SCHED_PRIORITY SCHED_PRIORITY_DEFAULT
 
@@ -23,7 +23,10 @@ class EAGControl : public SimpleTask
 
 public:
 
-  EAGControl() : SimpleTask("EAGContol", EAG_CONTROL_STACK_SIZE),
+  EAGControl() : SimpleTask("EAGContol",
+                            EAG_CONTROL_SCHED_PRIORITY,
+                            EAG_CONTROL_STACK_SIZE,
+                            EAG_CONTROL_SCHED),
   eag_publisher(EAGPublisher()),
   eag_scrubber(EAGScrubber())
   {
