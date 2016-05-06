@@ -1837,6 +1837,7 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("NAMED_VALUE_FLOAT", 1.0f);
 		configure_stream("ESTIMATOR_STATUS", 0.5f);
 		configure_stream("ADSB_VEHICLE", 2.0f);
+		configure_stream("EAG_RAW", 10.0f);
 		break;
 
 	case MAVLINK_MODE_ONBOARD:
@@ -2443,6 +2444,3 @@ int mavlink_main(int argc, char *argv[])
 
 	return 0;
 }
-
-
-
