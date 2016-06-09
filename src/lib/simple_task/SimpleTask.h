@@ -10,8 +10,7 @@
 /* Abstract class for deriving task objects.
    This class uses the functions exported from px4_tasks.h.
 
-   Derived classes must implement job(), which is the entry point to the thread,
-   and call the protected schedule() function to spawn the thread.
+   Derived classes must implement job(), which is the entry point to the thread.
 
    @author Joseph Sullivan <jgs.424112@gmail.com> */
 #ifndef SIMPLE_TASK_H
@@ -45,10 +44,6 @@ public:
 
 private:
 
-  int pid;
-
-  bool thread_should_exit;
-
   const char* _task_name;
 
   const int _priority;
@@ -57,14 +52,18 @@ private:
 
   const int _scheduler;
 
+  int pid;
+
+  bool thread_should_exit;
+
 protected:
   SimpleTask(const char* task_name, int priority, int stack_size, int scheduler) :
-  pid(0),
-  thread_should_exit(false),
   _task_name(task_name),
   _priority(priority),
   _stack_size(stack_size),
   _scheduler(scheduler),
+  pid(0),
+  thread_should_exit(false),
   thread_running(false)
   {}
 
@@ -118,7 +117,7 @@ public:
       if(NULL == task) return ;
 
       // Task is already in the list
-      if(NULL != this->get_node(task)) return ;
+      if(NULL != get_node(task)) return ;
 
       TaskNode *node = head;
 
@@ -148,7 +147,7 @@ public:
     if(NULL == head->task) return;
 
     // Task is not in the list
-    TaskNode* node = this->get_node(task);
+    TaskNode* node = get_node(task);
     if(NULL == node) return;
 
     // heal the list

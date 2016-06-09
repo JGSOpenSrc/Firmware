@@ -22,7 +22,11 @@ SimpleTask::~SimpleTask()
 // Registers the job in the scheduler
 void SimpleTask::start()
 {
+  // Guard clause
   if(this->is_running()) return;
+
+  this->thread_should_exit = false;
+
   // A list of all scheduled tasks
   static TaskList tasks;
   task_list = &tasks;
@@ -52,16 +56,17 @@ void SimpleTask::thread_runtime_exception(const char *exception)
 Callback method used to enter a task's working thread.
 The signature of run_job must match that of px4_main_t.
 
-@param argv should contain a singal cstring containing the name of the task
+@param argv should contain a single cstring containing the name of the task
 */
 int run_job(int argc, char** argv)
 {
+    PX4_INFO("CALLBACK");
     SimpleTask *task = task_list->get_task(argv[0]);
 
     if(NULL == task){
       PX4_ERR("Task with name %s was not in the task list!", argv[0]);
       return -1;
     }
-    // while(1);
+    PX4_INFO("%s", task->get_name());
     return task->job();
 }
