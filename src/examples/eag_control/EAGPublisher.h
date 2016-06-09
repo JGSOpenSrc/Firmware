@@ -1,5 +1,5 @@
 // #include <px4_tasks.h>
-#include "SimpleTask.h"
+#include "simple_task/SimpleTask.h"
 #include "uORB/topics/eag_raw.h"
 
 #define EAG_PUBLISHER_STACK_SIZE      2000

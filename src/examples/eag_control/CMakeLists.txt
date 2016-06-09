@@ -36,11 +36,11 @@ px4_add_module(
 	STACK_MAIN 1000
 	SRCS
 		eag_control_main.cpp
-		SimpleTask.cpp
 		EAGControl.cpp
 		EAGPublisher.cpp
 		EAGScrubber.cpp
 	DEPENDS
 		platforms__common
+		lib__simple_task
 	)
 # vim: set noet ft=cmake fenc=utf-8 ff=unix :

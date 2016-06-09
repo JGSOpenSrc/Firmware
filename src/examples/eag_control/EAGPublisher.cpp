@@ -8,6 +8,7 @@
 int EAGPublisher::job()
 {
   this->thread_running = true;
+
   // attempt to open the _eag_device
   int eag_fd = px4_open(_eag_device, O_RDONLY);
 
@@ -15,15 +16,16 @@ int EAGPublisher::job()
     this->thread_runtime_exception("exception occurred opening port");
   }
 
-  // pollfd for polling device for new data
+  // struct for polling device for new data
   px4_pollfd_struct_t pollfd;
   pollfd.fd = eag_fd;
   pollfd.events = POLLIN;
 
   uint8_t buffer[READ_BUFFER_SIZE];
 
+  /* Working loop of this thread */
   while(!this->should_exit()){
-		/* working loop of this thread */
+
     int ret = px4_poll(&pollfd, 1, 10000);
 
     // Unexpected behavior
@@ -39,7 +41,6 @@ int EAGPublisher::job()
 
     // Got data
     else if(pollfd.revents & POLLIN){
-
       ret = px4_read(eag_fd, buffer, READ_BUFFER_SIZE);
       uint64_t time_stamp = hrt_absolute_time();
 
