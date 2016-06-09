@@ -125,6 +125,7 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_time_offset_pub(nullptr),
 	_follow_target_pub(nullptr),
 	_transponder_report_pub(nullptr),
+	_ir_calibration_pub(nullptr),
 	_control_mode_sub(orb_subscribe(ORB_ID(vehicle_control_mode))),
 	_hil_frames(0),
 	_old_timestamp(0),
@@ -252,6 +253,10 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 
 	case MAVLINK_MSG_ID_GPS_INJECT_DATA:
 		handle_message_gps_inject_data(msg);
+		break;
+
+	case MAVLINK_MSG_ID_IR_CALIBRATION:
+		handle_message_ir_calibration(msg);
 		break;
 
 	default:
@@ -1979,6 +1984,26 @@ MavlinkReceiver::handle_message_hil_state_quaternion(mavlink_message_t *msg)
 		} else {
 			orb_publish(ORB_ID(battery_status), _battery_pub, &hil_battery_status);
 		}
+	}
+}
+
+void
+MavlinkReceiver::handle_message_ir_calibration(mavlink_message_t *msg) {
+	mavlink_ir_calibration_t ir_cal;
+	mavlink_msg_ir_calibration_decode(msg, &ir_cal);
+
+	struct ir_calibration_s orb_ir_cal;
+	memset(&orb_ir_cal, 0, sizeof(ir_calibration_s));
+
+	orb_ir_cal.data_code = ir_cal.data_code;
+	orb_ir_cal.data = ir_cal.data;
+
+	if(_ir_calibration_pub == nullptr)
+	{
+		_ir_calibration_pub = orb_advertise(ORB_ID(ir_calibration), &orb_ir_cal);
+	}
+	else {
+		orb_publish(ORB_ID(ir_calibration), _ir_calibration_pub, &orb_ir_cal);
 	}
 }
 

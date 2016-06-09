@@ -43,6 +43,7 @@
 
 #include <systemlib/perf_counter.h>
 #include <uORB/uORB.h>
+#include <uORB/topics/ir_calibration.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/vehicle_control_mode.h>
@@ -142,6 +143,7 @@ private:
 	void handle_message_follow_target(mavlink_message_t *msg);
 	void handle_message_adsb_vehicle(mavlink_message_t *msg);
 	void handle_message_gps_inject_data(mavlink_message_t *msg);
+	void handle_message_ir_calibration(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -205,6 +207,7 @@ private:
 	orb_advert_t _time_offset_pub;
 	orb_advert_t _follow_target_pub;
 	orb_advert_t _transponder_report_pub;
+	orb_advert_t _ir_calibration_pub;
 	static const int _gps_inject_data_pub_size = 4;
 	orb_advert_t _gps_inject_data_pub[_gps_inject_data_pub_size];
 	int _gps_inject_data_next_idx = 0;

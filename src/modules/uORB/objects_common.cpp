@@ -45,6 +45,9 @@
 
 #include <drivers/drv_orb_dev.h>
 
+#include "topics/ir_calibration.h"
+ORB_DEFINE(ir_calibration, struct ir_calibration_s);
+
 #include "topics/eag_raw.h"
 ORB_DEFINE(eag_raw, struct eag_raw_s);
 
