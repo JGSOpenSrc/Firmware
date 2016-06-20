@@ -47,6 +47,8 @@
 #include <lib/geo/geo.h>
 #include <uORB/uORB.h>
 #include <uORB/topics/eag_raw.h>
+#include <uORB/topics/ir_calibration.h>
+#include <uORB/topics/distance_sensor_filtered.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_gps_position.h>
@@ -396,12 +398,124 @@ protected:
 
 			msg.raw_data = data.raw_data;
 			msg.time_stamp = data.time_stamp;
-			PX4_INFO("[Mavlink Stream EAG_RAW] sending payload");
 			_mavlink->send_message(MAVLINK_MSG_ID_EAG_RAW, &msg);
-			PX4_INFO("done");
 		}
 	}
 
+};
+
+class MavlinkStreamIRcalibration : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamIRcalibration::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "IR_CALIBRATION";
+	}
+
+	uint8_t get_id()
+	{
+		return MAVLINK_MSG_ID_IR_CALIBRATION;
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+			return new MavlinkStreamIRcalibration(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_IR_CALIBRATION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_ir_cal_sub;
+	uint64_t _ir_cal_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamIRcalibration(MavlinkStreamIRcalibration &);
+	MavlinkStreamIRcalibration& operator = (const MavlinkStreamIRcalibration &);
+
+protected:
+	explicit MavlinkStreamIRcalibration(Mavlink *mavlink) : MavlinkStream(mavlink),
+	_ir_cal_sub(_mavlink->add_orb_subscription(ORB_ID(ir_calibration))),
+	_ir_cal_time(0)
+	{}
+
+	void send(hrt_abstime t)
+	{
+		struct ir_calibration_s data;
+
+		if(_ir_cal_sub->update(&_ir_cal_time, &data)){
+			mavlink_ir_calibration_t msg = {};
+
+			msg.data_code = data.data_code;
+			msg.data = data.data;
+			msg.timestamp = data.timestamp;
+			_mavlink->send_message(MAVLINK_MSG_ID_IR_CALIBRATION, &msg);
+		}
+	}
+};
+
+class MavlinkStreamDistanceFilter : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamDistanceFilter::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "DISTANCE_FILTER";
+	}
+
+	uint8_t get_id()
+	{
+		return MAVLINK_MSG_ID_DISTANCE_SENSOR_FILTERED;
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+			return new MavlinkStreamDistanceFilter(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_DISTANCE_SENSOR_FILTERED_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_distance_filter_sub;
+	uint64_t _distance_filter_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamDistanceFilter(MavlinkStreamDistanceFilter &);
+	MavlinkStreamDistanceFilter& operator = (const MavlinkStreamDistanceFilter &);
+
+protected:
+	explicit MavlinkStreamDistanceFilter(Mavlink *mavlink) : MavlinkStream(mavlink),
+	_distance_filter_sub(_mavlink->add_orb_subscription(ORB_ID(distance_sensor_filtered))),
+	_distance_filter_time(0)
+	{}
+
+	void send(hrt_abstime t)
+	{
+		struct distance_sensor_filtered_s data;
+
+		if(_distance_filter_sub->update(&_distance_filter_time, &data)){
+			mavlink_distance_sensor_filtered_t msg = {};
+
+			msg.current_distance = data.current_distance;
+			msg.covariance = data.covariance;
+			msg.timestamp = data.timestamp;
+			_mavlink->send_message(MAVLINK_MSG_ID_DISTANCE_SENSOR_FILTERED, &msg);
+		}
+	}
 };
 
 class MavlinkStreamStatustext : public MavlinkStream
@@ -3010,5 +3124,7 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamAltitude::new_instance, &MavlinkStreamAltitude::get_name_static),
 	new StreamListItem(&MavlinkStreamADSBVehicle::new_instance, &MavlinkStreamADSBVehicle::get_name_static),
 	new StreamListItem(&MavlinkStreamEagRaw::new_instance, &MavlinkStreamEagRaw::get_name_static),
+	new StreamListItem(&MavlinkStreamIRcalibration::new_instance, &MavlinkStreamIRcalibration::get_name_static),
+	new StreamListItem(&MavlinkStreamDistanceFilter::new_instance, &MavlinkStreamDistanceFilter::get_name_static),
 	nullptr
 };

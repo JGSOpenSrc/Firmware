@@ -47,3 +47,13 @@ fi
 # Start Land Detector
 #
 land_detector start multicopter
+
+#
+# Smellocopter related tasks
+#
+ir_range_sensor start
+distance_filter start
+mavlink stream -d "/dev/ttyS1" -s IR_CALIBRATION -r 1
+mavlink stream -d "/dev/ttyACM0" -s IR_CALIBRATION -r 5
+mavlink stream -d "/dev/ttyS1" -s DISTANCE_FILTER -r 1
+mavlink stream -d "/dev/ttyACM0" -s DISTANCE_FILTER -r 10

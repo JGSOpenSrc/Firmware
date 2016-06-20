@@ -28,44 +28,23 @@ public:
   int job();
 };
 
-#define FILTER_ORDER 6
-
-// declaration of file descriptors and uORB subscriptions / publications
-static orb_advert_t distance_sensor_filtered_pub;
-static struct distance_sensor_filtered_s *sensor_filtered;
-
-static int distance_sensor_sub;
-static struct distance_sensor_s *sensor;
-
-// Alloate memory for the thread shared data
-void allocate_heap();
-void allocate_heap()
-{
-  sensor_filtered = (distance_sensor_filtered_s *)malloc(sizeof(distance_sensor_filtered_s));
-  distance_sensor_filtered_pub = orb_advertise(ORB_ID(distance_sensor_filtered), sensor_filtered);
-  memset(sensor_filtered, 0, sizeof(distance_sensor_filtered_s));
-
-  distance_sensor_sub = orb_subscribe(ORB_ID(distance_sensor));
-  sensor = (distance_sensor_s *)malloc(sizeof(distance_sensor_s));
-  memset(sensor, 0, sizeof(distance_sensor_s));
-}
-
-// Free the memory previously allocated
-void free_heap();
-void free_heap()
-{
-  free(sensor_filtered);
-  free(sensor);
-}
+#define FILTER_ORDER 7
 
 int DistanceFilter::job(){
   this->thread_running = true;
 
-  // Allocate memory
-  allocate_heap();
+  // declaration of file descriptors and uORB subscriptions / publications
+  static orb_advert_t distance_sensor_filtered_pub;
+  static struct distance_sensor_filtered_s sensor_filtered;
+  distance_sensor_filtered_pub = orb_advertise(ORB_ID(distance_sensor_filtered),
+                                                &sensor_filtered);
+
+  static int distance_sensor_sub;
+  static struct distance_sensor_s sensor;
+  distance_sensor_sub = orb_subscribe(ORB_ID(distance_sensor));
 
   // declare and initialize filter memory
-  float y[FILTER_ORDER];
+  float y[FILTER_ORDER+1];
   float x[FILTER_ORDER];
   int i;
   for(i = 0; i < FILTER_ORDER; i++){
@@ -73,10 +52,9 @@ int DistanceFilter::job(){
     x[i] = 0.f;
   }
   // declare and initialize filter coefficients
-  float a[FILTER_ORDER] = {1, -4.33989362, 7.6660329, -6.87883536, 3.13221205, -0.5785529};
+  float a[FILTER_ORDER+1] = {1., -3.33308141, 5.51763428, -5.46718602, 3.37223579, -1.21801153, 0.20129298, 1.f};
 
-
-  float b[FILTER_ORDER] = {3.00960602e-05, 1.50480301e-04, 3.00960602e-04, 3.00960602e-04, 1.50480301e-04, 3.00960602e-05};
+  float b[FILTER_ORDER] = {0.00112578, 0.00675467, 0.01688667, 0.02251556, 0.01688667, 0.00675467, 0.00112578};
 
   // declare and initialize px4_poll struct
   px4_pollfd_struct_t pollfd;
@@ -101,39 +79,40 @@ int DistanceFilter::job(){
     else if(pollfd.revents & POLLIN)
     {
       // Pull the data out
-      orb_copy(ORB_ID(distance_sensor), distance_sensor_sub, sensor);
+      orb_copy(ORB_ID(distance_sensor), distance_sensor_sub, &sensor);
 
-      // Update the filter output
-      for(i = 1; i < FILTER_ORDER; i++)
-      {
-        x[FILTER_ORDER-i] = x[FILTER_ORDER-i-1];
-        y[FILTER_ORDER-i] = y[FILTER_ORDER-i-1];
+      if(sensor.type == sensor.MAV_DISTANCE_SENSOR_INFRARED){
+        // Update the filter output
+        for(i = 1; i < FILTER_ORDER; i++)
+        {
+          x[FILTER_ORDER-i] = x[FILTER_ORDER-i-1];
+          y[FILTER_ORDER-i] = y[FILTER_ORDER-i-1];
+        }
+
+        x[0] = sensor.current_distance;
+        y[0] = x[0]*b[0];
+        for(i = 1; i < FILTER_ORDER; i++)
+        {
+          y[0] += b[i]*x[i];
+        }
+
+        for(i = 1; i < FILTER_ORDER+1; i++)
+        {
+          y[0] -= a[i]*y[i];
+        }
+
+        // Publish the filtered sensor value
+        sensor_filtered.timestamp = sensor.timestamp;
+        sensor_filtered.current_distance = y[0];
+        sensor_filtered.covariance = sensor.covariance;
+
+
+        orb_publish(ORB_ID(distance_sensor_filtered),
+                          distance_sensor_filtered_pub,
+                          &sensor_filtered);
       }
-
-      x[0] = sensor->current_distance;
-      y[0] = b[0]*x[0];
-
-      for(i = 1; i < FILTER_ORDER; i++)
-      {
-        y[0] += b[i]*x[i] - a[i]*y[i];
-      }
-
-      // Publish the filtered sensor value
-      sensor_filtered->timestamp = sensor->timestamp;
-      sensor_filtered->min_distance = sensor->min_distance;
-      sensor_filtered->max_distance = sensor->max_distance;
-      sensor_filtered->current_distance = y[0];
-      sensor_filtered->covariance = sensor->covariance;
-      sensor_filtered->type = sensor->type;
-      sensor_filtered->orientation = sensor->orientation;
-
-      orb_publish(ORB_ID(distance_sensor_filtered),
-                  distance_sensor_filtered_pub,
-                  sensor_filtered);
-      PX4_INFO("[DistanceFilter] filter published with value %f", (double)y[0]);
     }
   }
-  free_heap();
   return 0;
 }
 

@@ -76,6 +76,13 @@ set(config_module_list
 	modules/land_detector
 
 	#
+	# Smellcopter eag control
+	#
+	examples/eag_control
+	examples/distance_filter
+	modules/ir_range_sensor
+
+	#
 	# Estimation modules (EKF/ SO3 / other filters)
 	#
 	# Too high RAM usage due to static allocations
@@ -124,10 +131,11 @@ set(config_module_list
 	lib/runway_takeoff
 	lib/tailsitter_recovery
 	lib/DriverFramework/framework
+	lib/simple_task
 	platforms/nuttx
 
 	# had to add for cmake, not sure why wasn't in original config
-	platforms/common 
+	platforms/common
 	platforms/nuttx/px4_layer
 
 	#

@@ -60,13 +60,11 @@ The signature of run_job must match that of px4_main_t.
 */
 int run_job(int argc, char** argv)
 {
-    PX4_INFO("CALLBACK");
     SimpleTask *task = task_list->get_task(argv[0]);
 
     if(NULL == task){
       PX4_ERR("Task with name %s was not in the task list!", argv[0]);
       return -1;
     }
-    PX4_INFO("%s", task->get_name());
     return task->job();
 }

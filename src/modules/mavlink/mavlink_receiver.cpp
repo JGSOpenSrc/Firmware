@@ -1997,6 +1997,7 @@ MavlinkReceiver::handle_message_ir_calibration(mavlink_message_t *msg) {
 
 	orb_ir_cal.data_code = ir_cal.data_code;
 	orb_ir_cal.data = ir_cal.data;
+	orb_ir_cal.timestamp = ir_cal.timestamp;
 
 	if(_ir_calibration_pub == nullptr)
 	{
