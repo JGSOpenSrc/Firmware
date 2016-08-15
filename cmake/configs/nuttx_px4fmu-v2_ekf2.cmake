@@ -76,6 +76,13 @@ set(config_module_list
 	modules/land_detector
 
 	#
+	# Smellcopter eag control
+	#
+	examples/eag_control
+	examples/distance_filter
+	modules/ir_range_sensor
+
+	#
 	# Estimation modules (EKF/ SO3 / other filters)
 	#
 	# Too high RAM usage due to static allocations

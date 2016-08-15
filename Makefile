@@ -146,9 +146,6 @@ px4-stm32f4discovery_default:
 px4fmu-v2_ekf2:
 	$(call cmake-build,nuttx_px4fmu-v2_ekf2)
 
-smellocopter:
-	$(call cmake-build,nuttx_px4fmu-v2_smellocopter)
-
 mindpx-v2_default:
 	$(call cmake-build,nuttx_mindpx-v2_default)
 
@@ -182,10 +179,10 @@ posix_eagle_default:
 eagle_default: posix_eagle_default qurt_eagle_default
 
 qurt_eagle_legacy_driver_default:
-	$(call cmake-build,$@)
-
+	$(call cmake-build,$@)	
+	
 posix_eagle_legacy_driver_default:
-	$(call cmake-build,$@)
+	$(call cmake-build,$@) 
 
 qurt_excelsior_default:
 	$(call cmake-build,$@)
