@@ -66,6 +66,11 @@ using namespace DriverFramework;
 // File on SD card used for storing calibration parameters
 #define CALIBRATION_FILE "/fs/microsd/ir_range_params"
 
+// Vertical distance of sensor PCB to FMU in NED frame
+#define VERTICAL_OFFSET_CM  8
+
+#define SENSOR_COVARIANCE   0.0225f
+
 /*
   Estimator related function declarations
 */
@@ -213,7 +218,7 @@ int InfraredRangeSensor::job()
   sensor.min_distance = 0.2;
   sensor.max_distance = 1.5;
   sensor.current_distance = 0.;
-  sensor.covariance = .05;                                    // unsure of what this should be
+  sensor.covariance = SENSOR_COVARIANCE;                      // unsure of what this should be
   sensor.type = MAV_DISTANCE_SENSOR_INFRARED;
   sensor.id = 42;                                             // unsure of what this should be either, using magic number
   sensor.orientation = MAV_SENSOR_ORIENTATION_YAW_180;
@@ -275,14 +280,25 @@ int InfraredRangeSensor::job()
       {
         static float last_distance_m = 0.f;
         float distance_cm = f_inverse(voltage);
+
         if(distance_cm > 0.0f && distance_cm <= x_samples[SAMPLE_SIZE-1] && distance_cm >= x_samples[0])
         {
+          // Publish valid readings
           hrt_abstime t = hrt_absolute_time();
-          last_distance_m = distance_cm / 100.f;
+          last_distance_m = (distance_cm + VERTICAL_OFFSET_CM) / 100.f;
           sensor.timestamp = t;
           sensor.current_distance = last_distance_m;
+          sensor.covariance = SENSOR_COVARIANCE;
           orb_publish(ORB_ID(distance_sensor), distance_sensor_pub, &sensor);
         }
+        /*else
+        {
+          // For invalid readings, publish last measurement with zero covariance
+          hrt_abstime t = hrt_absolute_time();
+          sensor.timestamp = t;
+          sensor.current_distance = last_distance_m;
+          sensor.covariance = 0.f
+        }*/
       }
     }
     usleep(50000);
@@ -476,7 +492,7 @@ InfraredRangeSensor::f_inverse(float volts)
   }
   if(iterations == 100)
   {
-    PX4_ERR("[ir_range_sensor] estimator did not converge");
+    // PX4_ERR("[ir_range_sensor] estimator did not converge");
     return -1.0f;
   }
   else return x;
