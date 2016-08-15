@@ -80,8 +80,9 @@ int EAGControl::job()
 
 	// get the initial attitude and save the yaw - I don't want the controller
 	// to automatically compensate initial yaw in NED frame
-	float initial_yaw = vehicle_att->yaw;
-	float initial_z = vehicle_local_pos->z;
+	struct vehicle_attitude_s initial_att; 				memset(&initial_att, 0, sizeof(vehicle_attitude_s));
+	struct vehicle_local_position_s initial_lpe; 	memset(&initial_lpe, 0, sizeof(vehicle_local_position_s));
+	bool est_initialized = false;
 
 	// TODO: Need to initialize attitude and local position variables before takeoff
 
@@ -96,14 +97,23 @@ int EAGControl::job()
 		// if offboard mode
 		if(control_mode->flag_control_offboard_enabled)
 		{
-			if(!vehicle_local_pos->dist_bottom_valid || !vehicle_local_pos->xy_valid){
-				PX4_INFO("TAKE OFF");
-				// TODO incease altitude until the lidar sensor is "valid"
-				float takeoff_thrust = 20; // Newtons
+			// Get the initial local position and attitude estimates for calculating
+			// relative control setpoints.
+			if(!est_initialized)
+			{
+				memcpy(&initial_att, vehicle_att, sizeof(vehicle_attitude_s));
+				memcpy(&initial_lpe, vehicle_local_pos, sizeof(vehicle_local_position_s));
+				est_initialized = true;
+			}
+
+			float takeoff_thrust = 10.30f; // Newtons
+			if(!vehicle_local_pos->dist_bottom_valid){
+				PX4_INFO("TAKE OFF AT GROUND DISTANCE %f", static_cast<double>(100.0f * vehicle_local_pos->dist_bottom));
+				// TODO incease altitude until the range sensor measurement is valid
 
 				att_sp->roll_body 					= (float) 0;
 				att_sp->pitch_body 					= (float)	0;
-				att_sp->yaw_body 						= (float) initial_yaw;
+				att_sp->yaw_body 						= (float) initial_att.yaw;
 				att_sp->yaw_sp_move_rate 		=	(float) 0;
 				att_sp->R_valid							= (bool) false;
 				att_sp->q_d_valid						= (bool) false;
@@ -121,10 +131,11 @@ int EAGControl::job()
 													att_sp);
 			}
 			else if(!vehicle_local_pos->xy_valid){
+				PX4_INFO("XY INVALID AT GROUND DISTANCE %f", static_cast<double>(100.0f * vehicle_local_pos->dist_bottom));
 				// Hold attitude
 				att_sp->roll_body 					= (float) 0;
 				att_sp->pitch_body 					= (float)	0;
-				att_sp->yaw_body 						= (float) initial_yaw;
+				att_sp->yaw_body 						= (float) initial_att.yaw;
 				att_sp->yaw_sp_move_rate 		=	(float) 0;
 				att_sp->R_valid							= (bool) false;
 				att_sp->q_d_valid						= (bool) false;
@@ -143,24 +154,26 @@ int EAGControl::job()
 			}
 			else {
 				// TODO hold altitude, stabilize attitude, and begin casting
+
 				// ascend to z_setpoint and hold position
-				float ground_distance_setpoint = 1.5; // (meters)
-				float z_setpoint = initial_z - ground_distance_setpoint;
-				const float tolerance = .1;
+				float ground_distance_setpoint = 1.0f; // (meters)
+				float z_setpoint =  vehicle_local_pos->z - (ground_distance_setpoint - vehicle_local_pos->dist_bottom);
+				const float tolerance = .1f;
+
 				if(vehicle_local_pos->dist_bottom < ground_distance_setpoint - tolerance){
-					PX4_INFO("ASCEND %f", static_cast<double>(vehicle_local_pos->dist_bottom));
+					PX4_INFO("ASCEND AT GROUND DISTANCE %f", static_cast<double>(vehicle_local_pos->dist_bottom * 100.0f));
 				}
 				else if(vehicle_local_pos->dist_bottom > ground_distance_setpoint + tolerance){
-					PX4_INFO("DESCEND %f", static_cast<double>(vehicle_local_pos->dist_bottom));
+					PX4_INFO("DESCEND AT GROUND DISTANCE %f", static_cast<double>(vehicle_local_pos->dist_bottom * 100.0f));
 				}
 				else{
-					PX4_INFO("HOLD Z %f", static_cast<double>(vehicle_local_pos->dist_bottom));
+					PX4_INFO("HOLD Z AT GROUND DISTANCE %f", static_cast<double>(vehicle_local_pos->dist_bottom * 100.0f));
 				}
 
-				local_pos_sp->x							= (float) 0;
-				local_pos_sp->y							= (float) 0;
+				local_pos_sp->x							= (float) initial_lpe.x;
+				local_pos_sp->y							= (float) initial_lpe.y;
 				local_pos_sp->z							= (float) z_setpoint;
-				local_pos_sp->yaw						= (float) initial_yaw;
+				local_pos_sp->yaw						= (float) initial_att.yaw;
 				local_pos_sp->vx						= (float) 0;
 				local_pos_sp->vy						= (float) 0;
 				local_pos_sp->vz						= (float) 0;
@@ -176,6 +189,7 @@ int EAGControl::job()
 		// send offboard control heartbeat_time
 		if(control_mode->flag_control_offboard_enabled){
 			offboard_control->timestamp = (uint64_t)this_time;
+			// Are the polarity of these signals correct?
 			offboard_control->ignore_thrust = true;
 			offboard_control->ignore_attitude = true;
 			offboard_control->ignore_bodyrate = true;
@@ -188,6 +202,7 @@ int EAGControl::job()
 		}
 		else {
 			offboard_control->timestamp = (uint64_t)this_time;
+			// Are the polarity of these signals correct?
 			offboard_control->ignore_thrust = false;
 			offboard_control->ignore_attitude = false;
 			offboard_control->ignore_bodyrate = false;
@@ -203,11 +218,8 @@ int EAGControl::job()
 	}
 
 	this->thread_running = false;
-
-	// Cleanup
-	// delete_publications();
-	// delete_subscriptions();
-
+	delete_publications();
+	delete_subscriptions();
 	return 0;
 }
 
