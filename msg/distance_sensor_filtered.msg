@@ -1,7 +1,5 @@
 # DISTANCE_SENSOR_FILTERED message data
 
-uint64 timestamp		# Microseconds since system boot
-
 float32 current_distance	# Current distance reading (in m)
 float32 covariance		# Measurement covariance (in m), 0 for unknown / invalid readings
 
