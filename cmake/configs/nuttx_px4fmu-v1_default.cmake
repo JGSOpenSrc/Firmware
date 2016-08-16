@@ -61,19 +61,18 @@ set(config_module_list
 	# General system control
 	#
 	modules/commander
+	modules/load_mon
 	modules/navigator
 	modules/mavlink
 	modules/gpio_led
 	modules/land_detector
 
 	#
-	# Estimation modules (EKF/ SO3 / other filters)
+	# Estimation modules
 	#
-	# Too high RAM usage due to static allocations
-	# modules/attitude_estimator_ekf
 	modules/attitude_estimator_q
-	modules/ekf_att_pos_estimator
 	modules/position_estimator_inav
+	modules/local_position_estimator
 	modules/ekf2
 
 	#
@@ -90,6 +89,7 @@ set(config_module_list
 	# Logging
 	#
 	modules/sdlog2
+	modules/logger
 
 	#
 	# Library modules
