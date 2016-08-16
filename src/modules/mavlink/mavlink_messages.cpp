@@ -76,7 +76,6 @@
 #include <uORB/topics/mavlink_log.h>
 #include <uORB/topics/optical_flow.h>
 #include <uORB/topics/position_setpoint_triplet.h>
->>>>>>> 73362f325bf5254639bf27a738451def62d50322
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/tecs_status.h>
 #include <uORB/topics/telemetry_status.h>
