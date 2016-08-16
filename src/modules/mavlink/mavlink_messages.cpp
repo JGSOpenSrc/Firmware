@@ -49,10 +49,6 @@
 #include <drivers/drv_pwm_output.h>
 #include <drivers/drv_rc_input.h>
 #include <lib/geo/geo.h>
-#include <uORB/uORB.h>
-#include <uORB/topics/eag_raw.h>
-#include <uORB/topics/ir_calibration.h>
-#include <uORB/topics/distance_sensor_filtered.h>
 #include <mathlib/mathlib.h>
 #include <px4_time.h>
 #include <systemlib/err.h>
@@ -93,6 +89,9 @@
 #include <uORB/topics/vision_position_estimate.h>
 #include <uORB/topics/vtol_vehicle_status.h>
 #include <uORB/topics/wind_estimate.h>
+#include <uORB/topics/eag_raw.h>
+#include <uORB/topics/ir_calibration.h>
+#include <uORB/topics/distance_sensor_filtered.h>
 #include <uORB/uORB.h>
 
 
@@ -349,9 +348,14 @@ public:
 		return "EAG_RAW";
 	}
 
-	uint8_t get_id()
+	static uint8_t get_id_static()
 	{
 		return MAVLINK_MSG_ID_EAG_RAW;
+	}
+
+	uint8_t get_id()
+	{
+		return get_id_static();
 	}
 
 	static MavlinkStream *new_instance(Mavlink *mavlink)
@@ -386,8 +390,8 @@ protected:
 			mavlink_eag_raw_t msg = {};
 
 			msg.raw_data = data.raw_data;
-			msg.time_stamp = data.time_stamp;
-			_mavlink->send_message(MAVLINK_MSG_ID_EAG_RAW, &msg);
+			msg.time_boot_ms = data.timestamp / 1000;
+			mavlink_msg_eag_raw_send_struct(_mavlink->get_channel(), &msg);
 		}
 	}
 
@@ -406,9 +410,14 @@ public:
 		return "IR_CALIBRATION";
 	}
 
-	uint8_t get_id()
+	static uint8_t get_id_static()
 	{
 		return MAVLINK_MSG_ID_IR_CALIBRATION;
+	}
+
+	uint8_t get_id()
+	{
+		return get_id_static();
 	}
 
 	static MavlinkStream *new_instance(Mavlink *mavlink)
@@ -444,8 +453,7 @@ protected:
 
 			msg.data_code = data.data_code;
 			msg.data = data.data;
-			msg.timestamp = data.timestamp;
-			_mavlink->send_message(MAVLINK_MSG_ID_IR_CALIBRATION, &msg);
+			mavlink_msg_ir_calibration_send_struct(_mavlink->get_channel(), &msg);
 		}
 	}
 };
@@ -463,9 +471,14 @@ public:
 		return "DISTANCE_FILTER";
 	}
 
-	uint8_t get_id()
+	static uint8_t get_id_static()
 	{
 		return MAVLINK_MSG_ID_DISTANCE_SENSOR_FILTERED;
+	}
+
+	uint8_t get_id()
+	{
+			return get_id_static();
 	}
 
 	static MavlinkStream *new_instance(Mavlink *mavlink)
@@ -501,8 +514,8 @@ protected:
 
 			msg.current_distance = data.current_distance;
 			msg.covariance = data.covariance;
-			msg.timestamp = data.timestamp;
-			_mavlink->send_message(MAVLINK_MSG_ID_DISTANCE_SENSOR_FILTERED, &msg);
+			msg.time_boot_ms = data.timestamp / 1000;
+			mavlink_msg_distance_sensor_filtered_send_struct(_mavlink->get_channel(), &msg);
 		}
 	}
 };
@@ -3446,8 +3459,8 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamAltitude::new_instance, &MavlinkStreamAltitude::get_name_static, &MavlinkStreamAltitude::get_id_static),
 	new StreamListItem(&MavlinkStreamADSBVehicle::new_instance, &MavlinkStreamADSBVehicle::get_name_static, &MavlinkStreamADSBVehicle::get_id_static),
 	new StreamListItem(&MavlinkStreamWind::new_instance, &MavlinkStreamWind::get_name_static, &MavlinkStreamWind::get_id_static),
-	new StreamListItem(&MavlinkStreamEagRaw::new_instance, &MavlinkStreamEagRaw::get_name_static),
-	new StreamListItem(&MavlinkStreamIRcalibration::new_instance, &MavlinkStreamIRcalibration::get_name_static),
-	new StreamListItem(&MavlinkStreamDistanceFilter::new_instance, &MavlinkStreamDistanceFilter::get_name_static),
+	new StreamListItem(&MavlinkStreamEagRaw::new_instance, &MavlinkStreamEagRaw::get_name_static, &MavlinkStreamEagRaw::get_id_static),
+	new StreamListItem(&MavlinkStreamIRcalibration::new_instance, &MavlinkStreamIRcalibration::get_name_static, &MavlinkStreamIRcalibration::get_id_static),
+	new StreamListItem(&MavlinkStreamDistanceFilter::new_instance, &MavlinkStreamDistanceFilter::get_name_static, &MavlinkStreamDistanceFilter::get_id_static),
 	nullptr
 };
