@@ -42,12 +42,12 @@ int EAGPublisher::job()
     // Got data
     else if(pollfd.revents & POLLIN){
       ret = px4_read(eag_fd, buffer, READ_BUFFER_SIZE);
-      uint64_t time_stamp = hrt_absolute_time();
+      uint64_t timestamp = hrt_absolute_time();
 
       // Publish the data
       int i;
       for(i = 0; i < ret; i++){
-        _eag_raw.time_stamp = time_stamp;
+        _eag_raw.timestamp = timestamp;
         _eag_raw.raw_data = buffer[i];
         orb_publish(ORB_ID(eag_raw), _eag_raw_pub, &_eag_raw);
       }

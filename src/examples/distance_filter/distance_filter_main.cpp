@@ -3,7 +3,7 @@
 #include "uORB/topics/distance_sensor.h"
 #include "uORB/topics/distance_sensor_filtered.h"
 
-#include "px4_log.h"
+//#include "px4_log.h"
 #include <px4_posix.h>
 #include <cstring>
 #include <cstdlib>
@@ -190,8 +190,12 @@ int distance_filter_main(int argc, char* argv[])
 
   else if(!strcmp(argv[1], "status"))
   {
-    filter->is_running()  ? warnx("Distance Filter is running")
-                          : warnx("Distance Filter is not running");
+    if(filter->is_running()) {
+      warnx("Distance Filter is running");
+    }
+    else {
+      warnx("Distance Filter is not running");
+    }
   }
 
   return 0;

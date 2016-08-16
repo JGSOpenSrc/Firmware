@@ -64,12 +64,24 @@ int eag_control_main(int argc, char* argv[])
   }
 
   else if(!strcmp(argv[1],"status")){
-    controller->is_running()  ? warnx("EAG Control is running")
-                              : warnx("EAG Control is not running");
-    controller->eag_publisher_alive() ? warnx("EAG Publisher is running")
-                                      : warnx("EAG Publisher is not running");
-    controller->eag_scrubber_alive()  ? warnx("EAG Scrubber is running")
-                                      : warnx("EAG Scrubber is not running");
+    if(controller->is_running()){
+			warnx("EAG Control is running");
+		}
+		else {
+			warnx("EAG Control is not running");
+		}
+		if(controller->eag_publisher_alive()){
+			warnx("EAG Publisher is running");
+		}
+		else {
+			warnx("EAG Publisher is not running");
+		}
+		if(controller->eag_scrubber_alive()) {
+			warnx("EAG Scrubber is running");
+		}
+		else {
+			warnx("EAG Scrubber is not running");
+		}
   }
   return 0;
 }

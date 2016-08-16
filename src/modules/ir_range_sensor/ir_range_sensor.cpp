@@ -815,8 +815,12 @@ int ir_range_sensor_main(int argc, char* argv[])
 
   else if(!strcmp(argv[1], "status"))
   {
-    ir_sensor->is_running() ? warnx("Infrared Range Sensor is running")
-                            : warnx("Infrared Range Sensor is not running");
+    if(ir_sensor->is_running()) {
+      warnx("Infrared Range Sensor is running");
+    }
+    else {
+      warnx("Infrared Range Sensor is not running");
+    }
   }
 
   return 0;
